@@ -31,7 +31,8 @@
     },
 
     "quantization": {
-        "is_quant": false
+        "is_quant": false,
+        "quant_type":"int8"
     },
 
     "MoEfication": {
