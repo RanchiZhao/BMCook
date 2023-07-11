@@ -193,7 +193,11 @@ def finetune(
     teacher: CPMBee,
     cook_config: ConfigParser,
 ):
-
+    do_distill = True
+    distill_config = cook_config.get('distillation')
+    if distill_config['ce_scale'] + distill_config['mse_hidn_scale'] + distill_config['mse_att_scale'] == 0:
+        do_distill = False
+    
     CookTrainer.set_compression(cook_config, model, optimizer, teacher=teacher)
 
     average_time = bmt.utils.AverageRecorder()
@@ -278,13 +282,17 @@ def finetune(
                 ext_table_ids,
                 ext_table_sub,
             )
-            outputs = CookTrainer.forward(model, loss_func, target, **data)
+            outputs = CookTrainer.forward(model, loss_func, targets, **data)
             loss = outputs.loss
 
             mem_usage, tim_usage = add_mem_time("forward", mem_usage, tim_usage)
 
             # ===========
             optim_manager.backward(loss)
+            if do_distill:
+                d_loss = bmt.sum_loss(outputs.d_loss).item()
+            else:
+                d_loss = 0
             mem_usage, tim_usage = add_mem_time("backward", mem_usage, tim_usage)
 
             # ===========
@@ -381,11 +389,13 @@ def finetune(
                     ]
                 )
             )
-            if iteration % args.inspect_iters == 0:
-                model_inspect = bmt.inspect.inspect_model(model, "*")
-                bmt.print_rank(bmt.inspect.format_summary(model_inspect))
-                train_info["model_inspect"] = model_inspect
-                print(train_info)
+            bmt.print_rank('| d_loss: {}'.format(d_loss))
+            
+            # if iteration % args.inspect_iters == 0:
+            #     model_inspect = bmt.inspect.inspect_model(model, "*")
+            #     bmt.print_rank(bmt.inspect.format_summary(model_inspect))
+            #     train_info["model_inspect"] = model_inspect
+            #     print(train_info)
 
             # write log here
             if args.tensorboard is not None and bmt.rank() == 0:
@@ -393,7 +403,7 @@ def finetune(
                 for task_name, loss in task_loss_map.items():
                     writer.add_scalar("Loss/train/{}".format(task_name), loss, global_steps)
 
-            bmcook.save(model, args.save_name, mode="quant")  # use this to save compressed model, choose mode == "quant" or "prune" to save quantized model or pruned model.
+            bmcook.save( model, args.save_name, mode="quant")  # use this to save compressed model, choose mode == "quant" or "prune" to save quantized model or pruned model.
     # end of finetune
 
 def main():
