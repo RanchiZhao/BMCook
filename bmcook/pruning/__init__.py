@@ -60,7 +60,6 @@ def mask_storage(ordered_masks, storage_params, storage_info):
             del contiguous_param
     return storaged_mask
 
-
 class BMPrune:
     '''
     BMPrune prunes unimportant weights in PLMs.

@@ -6,6 +6,7 @@
         "mse_hidn_scale": 0,
         "mse_hidn_module": ["[post]encoder.output_layernorm:[post]encoder.output_layernorm"],
         "mse_hidn_proj": false
+
     },
 
     "pruning": {
@@ -31,7 +32,7 @@
     },
 
     "quantization": {
-        "is_quant": false,
+        "is_quant": true,
         "quant_type":"int8"
     },
 
