@@ -22,7 +22,7 @@ class BMQuant:
         if not quant_config['is_quant']:
             return
 
-        if quant_config['is_quant'] == 'int8':
+        if quant_config['quant_type'] == 'int8':
             # fix cpm_kernel
             ct.gemm.GEMMInt8._backward = ct.gemm.GEMMInt8.backward
             def new_func(ctx, grad_f):
@@ -32,19 +32,22 @@ class BMQuant:
             ct.gemm.GEMMInt8.backward = new_func
 
             target_linear = model_center.layer.Linear if target_linear is None else target_linear
-
             for name, module in model.named_modules():
+                print("-1")
                 if isinstance(module, target_linear):
                     if len(quant_config["quantized_module"]) != 0:
+                        print("0")
                         if not any([pattern in name for pattern in quant_config["quantized_module"]]):
                             continue
                     if target_linear != model_center.layer.Linear:
+                        print("1")
                         module.forward = types.MethodType(forward_int8_cpmlive, module)
                     else:
+                        print("2")
                         module.forward = types.MethodType(forward_in8, module)
                     module.quant = True
         #add here            
-        elif quant_config['is_quant'] == 'int4':
+        elif quant_config['quant_type'] == 'int4':
             target_linear = model_center.layer.Linear if target_linear is None else target_linear
             for name, module in model.named_modules():
                 if isinstance(module, target_linear):
@@ -53,6 +56,7 @@ class BMQuant:
                             continue
                     if target_linear != model_center.layer.Linear:
                         module.forward = types.MethodType(forward_int4_cpmlive, module)
+                        print("2")
                     else:
                         raise FutureWarning("not available, future work") 
                     module.quant = True
@@ -81,7 +85,7 @@ def forward_int8_cpmlive(module_self, x):
     return x
 
 #add here
-def forward_int4_cpmlive(module_self, x: torch.Tensor,blocksize,compress_statistics,quant_type):
+def forward_int4_cpmlive(module_self, x: torch.Tensor,blocksize = 64,compress_statistics = True ,quant_type = 'nf4'):
     #quant_state可能需要保存
     original_weights = module_self.weight.data
     w = module_self.weight.data.contiguous().half()

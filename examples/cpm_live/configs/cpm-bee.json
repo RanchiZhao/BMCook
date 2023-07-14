@@ -10,10 +10,10 @@
     },
 
     "pruning": {
-        "is_pruning": true,
+        "is_pruning": false,
         "pruning_mask_path": "prune_example.bin",
         "pruned_module": ["input_embedding"],
-        "mask_method": "sprune",
+        "mask_method": "m4n2_1d",
         "sprune": {
                 "criterion": "l0",
                 "training_mask": ["att", "ffn"],
