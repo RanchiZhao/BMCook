@@ -22,7 +22,7 @@ from typing import Dict, List, Union
 import torch
 import bmtrain as bmt
 import os
-from examples.cpm_live.arguments import get_args
+from cpm_live.arguments_cook import get_args
 from cpm_live.utils import allgather_objects
 from cpm_live.training_tasks.bee import FinetuneDataset
 import bmcook
