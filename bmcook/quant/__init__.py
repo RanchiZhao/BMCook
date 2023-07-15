@@ -33,17 +33,13 @@ class BMQuant:
 
             target_linear = model_center.layer.Linear if target_linear is None else target_linear
             for name, module in model.named_modules():
-                print("-1")
                 if isinstance(module, target_linear):
                     if len(quant_config["quantized_module"]) != 0:
-                        print("0")
                         if not any([pattern in name for pattern in quant_config["quantized_module"]]):
                             continue
                     if target_linear != model_center.layer.Linear:
-                        print("1")
                         module.forward = types.MethodType(forward_int8_cpmlive, module)
                     else:
-                        print("2")
                         module.forward = types.MethodType(forward_in8, module)
                     module.quant = True
         #add here            
